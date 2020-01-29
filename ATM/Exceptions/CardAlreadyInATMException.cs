@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace ATM.Exceptions
 {
-    public class NoCardInsertedException : Exception
+    public class CardAlreadyInATMException : Exception
     {
-        public NoCardInsertedException() : base ("Such card doesn't exist!")
+        public CardAlreadyInATMException() : base("Card already in ATM!")
         {
+
         }
     }
 }

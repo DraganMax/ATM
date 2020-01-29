@@ -44,10 +44,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ATMachine.cs" />
-    <Compile Include="Exceptions\NoCardInsertedException.cs" />
+    <Compile Include="Exceptions\CardAlreadyInATMException.cs" />
+    <Compile Include="Exceptions\NotEnoughFundsException.cs" />
+    <Compile Include="Exceptions\WrongAmountException.cs" />
+    <Compile Include="Exceptions\CardIsNotInsertedException.cs" />
+    <Compile Include="Exceptions\WrongCardNumberException.cs" />
     <Compile Include="Fee.cs" />
     <Compile Include="IATMachine.cs" />
     <Compile Include="Money.cs" />
+    <Compile Include="MoneyValidation.cs" />
     <Compile Include="PaperNote.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

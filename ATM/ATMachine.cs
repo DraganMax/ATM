@@ -2,78 +2,122 @@
 using ATM.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ATM
 {
     public class ATMachine : IATMachine
     {
-        public Money CardBalance;
-        public Dictionary<string, decimal> userList = new Dictionary<string, decimal>
-        {
-            { "44444", 10 }
-        };  
+        public List<Fee> ClientFees = new List<Fee>();
         public string Manufacter { get; }
         public string CardNumber { get; set; }
         public string SerialNumber { get; }
 
+        public Money ATMCash;
+
+        public Dictionary<string, decimal> cardList = new Dictionary<string, decimal>
+        {
+            { "44444", 10 },
+            { "22222", 45 },
+            { "11111", 19 }
+        };
         public ATMachine(string manufacter, string serialNumber)
         {
             Manufacter = manufacter;
             SerialNumber = serialNumber;
+
+            ATMCash.Notes = new Dictionary<PaperNote, int> {
+                { PaperNote.FiveEuro, 0 },
+                { PaperNote.TenEuro, 0 },
+                { PaperNote.TwentyEuro, 0 },
+                { PaperNote.FiftyEuro, 0 }
+            };
         }
         public decimal GetCardBalance()
         {
-            return userList[CardNumber];
+            if (CardNumber == null)
+            {
+                throw new CardIsNotInsertedException();
+            }
+            return cardList[CardNumber];
         }
 
         public void InsertCard(string cardNumber)
         {
-            bool pass = false;
-            
-            foreach (var card in userList.Keys)
+            if (!string.IsNullOrEmpty(CardNumber))
             {
-                if (card == cardNumber)
-                {
-                   pass = true;
-                   CardNumber = cardNumber;
-                }
+                throw new CardAlreadyInATMException();
             }
-            if (pass)
+            else if (cardList.ContainsKey(cardNumber))
             {
-                Console.WriteLine("Your card is inserted!");
-                Console.WriteLine(new string('-', 30));
+                CardNumber = cardNumber;
             }
             else
             {
-                throw new NoCardInsertedException();
+                throw new WrongCardNumberException();
             }
         }
 
         public void LoadMoney(Money money)
         {
-            CardBalance.Amount += money.Amount;
-            Console.WriteLine(CardBalance.Amount);
+            if(!MoneyValidation.CorrectNotesAndMoneyAmount(money))
+            {
+                throw new WrongAmountException();
+            }
+            ATMCash.Amount += money.Amount;
+            ATMCash.Notes[PaperNote.FiveEuro] += money.Notes[PaperNote.FiveEuro];
+            ATMCash.Notes[PaperNote.TenEuro] += money.Notes[PaperNote.TenEuro];
+            ATMCash.Notes[PaperNote.TwentyEuro] += money.Notes[PaperNote.TwentyEuro];
+            ATMCash.Notes[PaperNote.FiftyEuro] += money.Notes[PaperNote.FiftyEuro];
         }
 
         public IEnumerable<Fee> RetrieveChargedFees()
         {
-            throw new NotImplementedException();
+            return ClientFees;
         }
 
         public void ReturnCard()
         {
-            Console.WriteLine("Your card has been returned to you!");
-            Thread.Sleep(2000);
-            Environment.Exit(1);
+            if (CardNumber == null)
+                throw new CardIsNotInsertedException();
+            else
+            {
+                CardNumber = null;
+            }
         }
 
         public Money WithdrawMoney(int amount)
         {
-            throw new Exception();
+            if (amount % 5 != 0)
+            {
+                throw new WrongAmountException();
+            }
+            else if (CardNumber == null)
+            {
+                throw new CardIsNotInsertedException();
+            }
+            else if (cardList[CardNumber] < amount)
+            {
+                throw new NotEnoughFundsException();
+            }
+            var fee = new Fee
+            {
+                CardNumber = CardNumber,
+                WithdrawalFeeAmount = Convert.ToDecimal(amount * 0.01),
+                WithdrawalDate = DateTime.Now
+            };
+            ClientFees.Add(fee);
+            cardList[CardNumber] -= amount + fee.WithdrawalFeeAmount;
+            return new Money
+            {
+                Amount = amount,
+                Notes = new Dictionary<PaperNote, int>
+                {
+                    { PaperNote.FiveEuro, 1 },
+                    { PaperNote.TenEuro, 1 },
+                    { PaperNote.TwentyEuro, 1 },
+                    { PaperNote.FiftyEuro, 1 },
+                }
+            };
         }
     }
 }
